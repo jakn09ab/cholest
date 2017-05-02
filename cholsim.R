@@ -1,3 +1,4 @@
+rm(list=ls())#clear environment
 set.seed(1234)
 N <- 750000
 
@@ -38,46 +39,22 @@ data$groupname <- factor(data$groupname, levels = c(1,2,3), labels = c("group 1"
 
 #generates death to overall  
 data$year_0 <- 1
-data$year_1 <-  ifelse(data$treated=="treated",rbinom(N, 1, 1-0.035/4), rbinom(N, 1, 1-0.05/4))
 
-data$year_2 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_1 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                      ifelse(data$year_1 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
-data$year_3 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_2 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                      ifelse(data$year_2 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
-data$year_4 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_3 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                      ifelse(data$year_3 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
-data$year_5 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_4 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                      ifelse(data$year_4 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
-data$year_6 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_5 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                      ifelse(data$year_5 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
-data$year_7 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_6 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                      ifelse(data$year_6 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
-data$year_8 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_7 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                      ifelse(data$year_7 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
-data$year_9 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_8 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                      ifelse(data$year_8 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
-data$year_10 <- ifelse(data$treated=="treated", 
-                       ifelse(data$year_9 =="0",  0, rbinom(N, 1, 1-0.035/4)), 
-                       ifelse(data$year_9 =="0",  0, rbinom(N, 1, 1-0.05/4))
-)
+for (i in 1:40){ 
+  if (i == 1){
+    n <- ifelse(data$treated=="treated", rbinom(N, 1, 1-0.035/48), rbinom(N, 1, 1-0.05/48))
+  } 
+  else {
+    n <- ifelse(data$treated=="treated", 
+                ifelse(data[[paste0("year_", i-1)]] == 0,  0, rbinom(N, 1, 1-0.035/48)), 
+                ifelse(data[[paste0("year_", i-1)]] == 0,  0, rbinom(N, 1, 1-0.05/48))
+    )
+  }
+  data[[paste0("year_", i)]] <- n 
+}
+gc() #clears memory
 
-data_long <- reshape(data, direction="long", varying= c(list(4:14)), sep = "_", 
+data_long <- reshape(data, direction="long", varying= c(list(4:44)), sep = "_", 
                      idvar="id", timevar=c("year"))
 class(data_long$year)  
 data_long$year <- as.numeric(data_long$year)
@@ -101,23 +78,23 @@ plot(aggregate(year_0~year,data = subset(data_long, groupname=="group 1"), FUN= 
      
      main = "All Cause Mortality",
      
-     pch=0, 
-     
-     xlab= "years",
+     pch=20, 
+     col= "red",
+     xlab= "Quarters",
      ylab= "accummulated all-cause mortality")
-text(x=4, y=1, labels= "Current 50% treated")
-points(x=8, y=1, pch=0)
-text(x=4, y=1400, labels= "60% treated")
-points(x=8, y=1400, pch=6)
-text(x=4, y=2800, labels= "70% treated")
-points(x=8, y=2800, pch=8)
+text(x=16, y=1, labels= "Current 50% treated")
+points(x=32, y=1, pch=20, col="red")
+text(x=16, y=1000, labels= "60% treated")
+points(x=32, y=1000, pch=20, col ="blue")
+text(x=16, y=2800, labels= "70% treated")
+points(x=32, y=2800, pch=20, col="green")
 
 points(aggregate(year_0~year,data = subset(data_long, groupname=="group 2"), FUN= function(z) mysum(z)), 
-       
-       pch=6)
+       col="blue",
+       pch=20)
 points(aggregate(year_0~year,data = subset(data_long, groupname=="group 3"), FUN= function(z) mysum(z)), 
-       
-       pch=8)
+       col="green",
+       pch=20)
 title("Expected outcome of improvement in LLD adherence in Denmark", outer=TRUE, sub = "Simulation on Danish population with indication for LLD treatment")
 
 survivortable <- 1
@@ -135,46 +112,21 @@ colnames(groups) <- c("year","group 1", "group 2", "group 3")
 ####---- CVD EVENT
 #generates death to overall  
 data$year_0 <- 1
-data$year_1 <-  ifelse(data$treated=="treated",rbinom(N, 1, 1-0.016/4), rbinom(N, 1, 1-0.03/4))
+for (i in 1:40){ 
+  if (i == 1){
+    n <- ifelse(data$treated=="treated", rbinom(N, 1, 1-0.016/48), rbinom(N, 1, 1-0.03/48))
+  } 
+  else {
+    n <- ifelse(data$treated=="treated", 
+                ifelse(data[[paste0("year_", i-1)]] == 0,  0, rbinom(N, 1, 1-0.016/48)), 
+                ifelse(data[[paste0("year_", i-1)]] == 0,  0, rbinom(N, 1, 1-0.03/48))
+    )
+  }
+  data[[paste0("year_", i)]] <- n 
+}
 
-data$year_2 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_1 =="0",  0, rbinom(N, 1, 1-0.016/4)), 
-                      ifelse(data$year_1 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
-data$year_3 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_2 =="0",  0, rbinom(N, 1, 1-0.016/4)), 
-                      ifelse(data$year_2 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
-data$year_4 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_3 =="0",  0, rbinom(N, 1, 1-0.016/4)), 
-                      ifelse(data$year_3 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
-data$year_5 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_4 =="0",  0, rbinom(N, 1, 1-0.016/4)), 
-                      ifelse(data$year_4 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
-data$year_6 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_5 =="0",  0, rbinom(N, 1, 1-0.016/4)), 
-                      ifelse(data$year_5 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
-data$year_7 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_6 =="0",  0, rbinom(N, 1, 1-0.016/4)), 
-                      ifelse(data$year_6 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
-data$year_8 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_7 =="0",  0, rbinom(N, 1, 1-0.016/4)), 
-                      ifelse(data$year_7 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
-data$year_9 <- ifelse(data$treated=="treated", 
-                      ifelse(data$year_8 =="0",  0, rbinom(N, 1, 1-0.016/4)), 
-                      ifelse(data$year_8 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
-data$year_10 <- ifelse(data$treated=="treated", 
-                       ifelse(data$year_9 =="0",  0, rbinom(N, 1,1-0.016/4)), 
-                       ifelse(data$year_9 =="0",  0, rbinom(N, 1, 1-0.03/4))
-)
 
-data_long <- reshape(data, direction="long", varying= c(list(4:14)), sep = "_", 
+data_long <- reshape(data, direction="long", varying= c(list(4:44)), sep = "_", 
                      idvar="id", timevar=c("year"))
 class(data_long$year)  
 data_long$year <- as.numeric(data_long$year)
@@ -187,22 +139,22 @@ mysum <- function(x){
 plot(aggregate(year_0~year,data = subset(data_long, groupname=="group 1"), FUN= function(z) mysum(z)), 
      main = "Myocardial infarction, Stroke, CV Death ",
      
-     pch=0, 
-     
-     xlab= "years",
+     pch=20, 
+     col="red",
+     xlab= "Quarters",
      ylab= "accumulated MI, Stroke,  CV Death")
 points(aggregate(year_0~year,data = subset(data_long, groupname=="group 2"), FUN= function(z) mysum(z)), 
-       
-       pch=6)
+       col="blue",
+       pch=20)
 points(aggregate(year_0~year,data = subset(data_long, groupname=="group 3"), FUN= function(z) mysum(z)), 
-       
-       pch=8)
+       col="green",
+       pch=20)
 text(x=4, y=1, labels= "Current 50% treated")
-points(x=8, y=1, pch=0)
-text(x=4, y=1000, labels= "60% treated")
-points(x=8, y=1000, pch=6)
-text(x=4, y=2000, labels= "70% treated")
-points(x=8, y=2000, pch=8)
+points(x=8, y=1, pch=20, col="red")
+text(x=4, y=500, labels= "60% treated")
+points(x=8, y=500, pch=20, col="blue")
+text(x=4, y=1000, labels= "70% treated")
+points(x=8, y=1000, pch=20, col="green")
 
 
 
